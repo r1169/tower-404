@@ -1,0 +1,20 @@
+# Generated reports and temporary browser / server artifacts
+/output/
+/tmp/
+/*.zip
+/*.py
+
+# Local development settings and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+Thumbs.db
+*.log

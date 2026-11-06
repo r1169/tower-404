@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');const {Airport}=require('./simulation.js');
+const data=[{id:12,code:'SF012',fuel:74},{id:23,code:'NV023',fuel:38,risk:true},{id:47,code:'AK047',fuel:57},{id:61,code:'SF061',fuel:92,kind:'ВЫЛЕТ'}];
+let a=new Airport(data);
+assert.equal(a.command(12,'Посадка',{runway:2}).ok,false);assert.equal(a.command(12,'Посадка',{gate:3}).ok,false);
+assert.ok(a.command(12,'Посадка').ok);assert.equal(a.gates[0].owner,12);assert.equal(a.runways[0].owner,12);
+a.tick(12);assert.equal(a.flights[0].phase,'taxiIn');assert.equal(a.runways[0].owner,null);assert.ok(a.flights[1].fuel<38);
+assert.equal(a.command(61,'Взлёт').ok,false);a.tick(5.1);assert.ok(a.command(61,'Взлёт').ok);assert.equal(a.gates[2].owner,61);
+a.tick(8);assert.equal(a.gates[2].owner,null);assert.equal(a.flights[3].phase,'takeoff');
+a.tick(10);assert.equal(a.flights[3].done,true);a.tick(5);assert.equal(a.flights[0].done,true);
+assert.equal(a.gates[0].owner,12);a.command(23,'Проверка');a.tick(12.1);assert.ok(a.command(23,'Изолированная стоянка').ok);a.tick(17.1);assert.ok(a.command(47,'Посадка').ok);assert.equal(a.flights[2].gate,2);a.tick(40);assert.equal(a.flights.filter(f=>f.done).length,4);
+const x=new Airport(data),y=new Airport(data);x.command(12,'Посадка');y.command(12,'Посадка');x.tick(40);for(let i=0;i<400;i++)y.tick(.1);assert.equal(x.flights[0].phase,y.flights[0].phase);assert.ok(Math.abs(x.flights[1].fuel-y.flights[1].fuel)<1e-7);
+console.log('PASS: phase timing, runway separation, gates, fuel, completion and timestep consistency');

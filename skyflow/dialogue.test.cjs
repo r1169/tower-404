@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const {Dialogue}=require('./dialogue.js');
+const d=new Dialogue();
+d.say('dana','Полоса свободна.');d.say('timur','Проверка завершена.');
+assert.equal(d.visible('timur'),null);assert.equal(d.active.who,'dana');
+d.say('dana','Полоса свободна.');assert.equal(d.history.length,2);
+d.say('timur','Опасный борт. Посадка запрещена.');assert.equal(d.active.who,'timur');assert.equal(d.active.priority,2);
+d.tick(20);assert.equal(d.active,null);assert.equal(d.history.length,3);
+d.say('dana','Новый рейс.');const before=d.active.age;assert.equal(d.active.age,before);
+d.tick(1);assert.equal(d.active.age,1);d.tick(20);assert.equal(d.active,null);
+assert.equal(d.history[0].text,'Новый рейс.');
+d.reset();assert.equal(d.history.length,0);assert.equal(d.active,null);
+d.say('dana','Полоса 2 закрыта на 20 с.');d.say('dana','Осмотр завершён. Полоса 2 снова открыта.');assert.equal(d.history.length,2);assert.match(d.active.text,/открыта/);assert.equal(d.queue.length,0);
+d.invalidate(item=>item.topic==='runway:2');assert.equal(d.active,null);assert.equal(d.history.length,2);
+console.log('PASS: single speaker, urgent interruption, duplicate suppression, expiry and reset');
