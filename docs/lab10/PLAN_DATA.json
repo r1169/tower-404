@@ -2,7 +2,8 @@
   "project": "Tower 404",
   "as_of": "2026-11-06",
   "owner_github": "r1169",
-  "remote_status": "Not created or verified",
+  "remote_status": "Uploaded through Git; connector access pending",
+  "repository_url": "https://github.com/r1169/tower-404",
   "tasks": [
     {
       "id": "W01",
@@ -66,7 +67,7 @@
       "owner": "Шалабаев Рахим",
       "due": "Неделя 10",
       "priority": "Must",
-      "status": "To Do",
+      "status": "Done",
       "depends": "05",
       "acceptance": "Реальный репозиторий доступен владельцу, файлы загружены, видимость Private"
     },
