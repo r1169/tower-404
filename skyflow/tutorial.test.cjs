@@ -2,7 +2,7 @@ const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/st
 const {parse}=require('./controls.js');
 let overlay=null,frame;const store={};const app={innerHTML:'',append(o){overlay=o}};
 const document={querySelector:s=>s==='#app'?app:s==='.overlay'?overlay:null,querySelectorAll:()=>[],getElementById:()=>null,createElement:()=>({innerHTML:'',querySelector:()=>({addEventListener(){},style:{}}),remove(){overlay=null}}),body:{append(){},classList:{add(){},remove(){}}}};
-const env={window:{SKYFLOW_DYNAMIC:false},document,localStorage:{getItem:k=>store[k],setItem:(k,v)=>store[k]=v},requestAnimationFrame:f=>frame=f,setTimeout(){}};
+const env={window:{SKYFLOW_PROLOGUE:false,SKYFLOW_DYNAMIC:false},document,localStorage:{getItem:k=>store[k],setItem:(k,v)=>store[k]=v},requestAnimationFrame:f=>frame=f,setTimeout(){}};
 vm.createContext(env);for(const name of ['simulation','dialogue','tutorial','game'])vm.runInContext(fs.readFileSync(__dirname+'/'+name+'.js','utf8'),env);
 const input=env.window.skyflowInput,speak=s=>input(parse(s)),snap=()=>env.window.skyflowSnapshot();
 speak('начать смену');assert.equal(snap().tutorial,0);assert.equal(snap().paused,true);

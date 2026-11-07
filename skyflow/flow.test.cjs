@@ -2,7 +2,7 @@ const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/st
 const {parse,GestureGate}=require('./controls.js');
 let overlay=null;const sounds=[];
 const app={innerHTML:'',append(o){overlay=o}};
-const context={window:{SKYFLOW_DYNAMIC:false,SKYFLOW_TUTORIAL:false,skyflowAudio:{play:n=>sounds.push(n),ambience:()=>{},setting:a=>'audio '+a}},document:{querySelector:s=>s==='#app'?app:s==='.overlay'?overlay:null,querySelectorAll:()=>[],getElementById:()=>null,createElement:()=>({innerHTML:'',remove(){overlay=null}}),body:{append(){},classList:{add(){},remove(){}}}},localStorage:{getItem:()=>0,setItem(){}},requestAnimationFrame(){},setTimeout(){},console};
+const context={window:{SKYFLOW_PROLOGUE:false,SKYFLOW_DYNAMIC:false,SKYFLOW_TUTORIAL:false,skyflowAudio:{play:n=>sounds.push(n),ambience:()=>{},setting:a=>'audio '+a}},document:{querySelector:s=>s==='#app'?app:s==='.overlay'?overlay:null,querySelectorAll:()=>[],getElementById:()=>null,createElement:()=>({innerHTML:'',remove(){overlay=null}}),body:{append(){},classList:{add(){},remove(){}}}},localStorage:{getItem:()=>0,setItem(){}},requestAnimationFrame(){},setTimeout(){},console};
 let frame;context.requestAnimationFrame=f=>frame=f;
 vm.createContext(context);vm.runInContext(fs.readFileSync(__dirname+'/simulation.js','utf8'),context);vm.runInContext(fs.readFileSync(__dirname+'/dialogue.js','utf8'),context);vm.runInContext(fs.readFileSync(__dirname+'/tutorial.js','utf8'),context);vm.runInContext(fs.readFileSync(__dirname+'/game.js','utf8'),context);
 let clock=1;frame(clock);function advance(seconds){for(let i=0;i<seconds*10;i++)frame(clock+=100)}
