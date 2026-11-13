@@ -129,3 +129,14 @@
 /* A dedicated square portrait keeps Dana's original proportions in training. */
 .tutorial-guide .tutorial-portrait{display:block;width:80px;height:80px;flex:0 0 80px;aspect-ratio:1;object-fit:contain;image-rendering:pixelated;background:#101a2b;border:1px solid #405968;border-radius:8px;padding:3px}.tutorial-guide>div{min-width:0}@media(max-width:600px){.tutorial-guide .tutorial-portrait{width:64px;height:64px;flex-basis:64px}}
 .training-choice{max-width:760px;margin:clamp(24px,8vh,90px) auto;padding:32px;text-align:center;background:#101b2b;border:1px solid #547488;box-shadow:8px 8px #0005;border-radius:10px}.training-choice>img{width:112px;height:112px;object-fit:contain;image-rendering:pixelated;margin-bottom:18px}.training-choice h1{font-size:clamp(24px,4vw,34px);margin:14px 0}.training-choice p{color:#b8c9d4;line-height:1.8}.training-choice .buttons{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin:24px 0}.training-choice small{color:#99b3c1;line-height:1.6;display:block}@media(max-width:650px){.training-choice{margin:24px 12px;padding:24px 16px}.training-choice .buttons{flex-direction:column}}
+
+/* Episode selection and persistent story/communications status. */
+.episode-card{display:block;width:100%;text-align:left;margin:12px 0;padding:16px;border:1px solid #42657b;background:#102333;color:#e4eef2;}
+.episode-card>span{display:block;font-size:20px;font-weight:700;color:#8de2be;}
+.episode-card small{display:block;margin-top:6px;color:#f4bb70;}
+.episode-card p{margin:8px 0 0;line-height:1.45;}
+.campaign-status{padding:12px 16px;border-top:1px solid #42657b;background:#0b1c29;font-size:14px;line-height:1.5;}
+.campaign-status p{margin:0 0 8px;}.campaign-status label{display:flex;justify-content:space-between;gap:8px;}
+.campaign-status progress{display:block;width:100%;height:10px;margin:8px 0;accent-color:#8de2be;}
+.campaign-clue{color:#f4bb70;}.episode-ending{line-height:1.65;}
+.overlay .modal{max-height:calc(100dvh - 64px);overflow-y:auto;}
