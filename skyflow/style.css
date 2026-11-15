@@ -260,3 +260,20 @@
 @media(max-width:600px){.music-setting-row{align-items:flex-start;flex-direction:column;gap:8px}.music-settings{padding:14px}.music-setting-row button{width:100%}}
 @media(max-width:900px){.episode-two-console.critical{position:relative}}
 @media(max-width:600px){.modal:has(.episode-story){padding:16px}.story-conversation{grid-template-columns:72px minmax(0,1fr);gap:12px}.story-avatar{width:72px;height:72px}.episode-story .story-line,.episode-story:has(.story-choices) .story-line{font-size:15px}.modal .story-person-name{font-size:16px}.episode-story .lera-reveal{max-width:260px}}
+
+/* Keep the document and device settings usable inside a short itch.io iframe. */
+html{height:100%;overflow-y:auto}
+body{min-height:100%;padding-bottom:calc(var(--hf-dock-height,60px) + 12px)}
+.hf-live{display:flex;align-items:center;gap:16px;pointer-events:auto;max-height:none;overflow:visible;padding:8px 16px;z-index:110}
+.hf-live-message{flex:1;min-width:0;max-height:4.5em;overflow:auto;overflow-wrap:anywhere;line-height:1.45}
+.hf-live button{flex:none;font:600 12px/1.35 'Golos Text',Arial,sans-serif;padding:10px 14px;color:#102820;background:var(--mint);border-color:var(--mint);border-radius:4px}
+.hf-live button[aria-expanded=true]{background:#d5fff1}
+.handsfree{position:fixed;right:16px;bottom:calc(var(--hf-dock-height,60px) + 12px);width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - var(--hf-dock-height,60px) - 24px);margin:0;padding:18px;overflow:auto;overscroll-behavior:contain;z-index:111;border-color:#547d83;border-radius:6px;box-shadow:0 12px 48px #000b;background:#101f2dfc}
+.handsfree[hidden]{display:none}
+.handsfree .hf-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px}
+.handsfree .hf-heading strong{grid-column:1;grid-row:1;line-height:1.6}
+.handsfree .hf-close{grid-column:2;grid-row:1;padding:7px 11px;margin:0}
+.handsfree #hf-toggle{grid-column:1 / -1;margin:0;background:var(--mint);color:#102820;border-color:var(--mint);font-weight:700;padding:12px}
+.handsfree details{margin-top:14px}.handsfree summary{line-height:1.6}
+.tutorial-card{max-height:calc(100dvh - var(--hf-dock-height,60px) - 24px)}
+@media(max-width:600px){.hf-live{gap:8px;padding:8px}.hf-live-message{font-size:11px}.hf-live button{max-width:145px;padding:9px 10px}.handsfree{right:8px;width:calc(100vw - 16px);padding:14px}}
