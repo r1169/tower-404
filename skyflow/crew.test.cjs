@@ -13,6 +13,20 @@ c.reset();assert.equal(c.pending,null);assert.equal(c.completed,0);assert.equal(
 for(let i=0;i<12;i++){d.reset();assert.equal(c.tick(20+i*50,d),true)}d.reset();assert.equal(c.tick(800,d),false);
 console.log('PASS: character voices, emotion metadata, event reactions, busy suppression, immediate operational interruption, stale reaction expiry, reset and no repeating idle loop');
 
+// Later chapters have their own colleagues' conversations and event reactions.
+for(const chapter of [2,3]){
+ const later=new Crew({classic:true});later.chapter=chapter;d.reset();assert.equal(later.tick(9,d,{busy:true,wave:1}),false);
+ assert.ok(later.tick(10,d,{busy:false,wave:1}));assert.match(d.active.text,chapter===2?/чай справа/:/лестниц/);
+ const initial=d.active.text;d.reset();assert.equal(later.tick(65,d,{busy:false,wave:1}),false);
+ later.react({type:'unnecessary'},70);assert.ok(later.tick(75,d,{busy:false,wave:1}));assert.match(d.active.text,/Зря завернули/);
+ d.say('dana','Опасный заход!',{priority:3});assert.equal(d.active.kind,'operation');assert.ok(d.deferred.length);d.clearPersonal();assert.equal(d.deferred.length,0);assert.ok(!d.queue.some(x=>x.kind==='personal'));
+ later.react({type:'incident'},90);d.reset();assert.ok(later.tick(140,d,{busy:false,wave:3}));assert.match(d.active.text,/тот сигнал/);d.reset();assert.equal(later.tick(200,d,{busy:false,wave:3}),false);
+ later.reset();d.reset();assert.ok(later.tick(10,d,{busy:false,wave:1}));assert.equal(d.active.text,initial);
+}
+const thirdCrew=new Crew();thirdCrew.chapter=3;thirdCrew.react({type:'complete',caseType:'hydraulic'},30);d.reset();assert.ok(thirdCrew.tick(35,d,{busy:false,wave:2}));assert.match(d.active.text,/Сел. Полосу освободил/);
+const secondCrew=new Crew();secondCrew.chapter=2;secondCrew.react({type:'goaround',caseType:'forged'},40);d.reset();assert.ok(secondCrew.tick(45,d,{busy:false,wave:3}));assert.match(d.active.text,/мой голос/);
+console.log('PASS: chapter-specific conversations, event context, once per shift, interruption, incident suppression and fresh retry');
+
 d.reset();c.reset();assert.equal(c.tick(8,d),true);assert.match(d.active.text,/взлётную полосу/);assert.match(d.queue[0].text,/бодрит/);d.say('dana','Новый рейс в очереди.');d.tick(7);assert.equal(d.active.kind,'operation');d.tick(7);assert.equal(d.active.kind,'personal');assert.equal(d.active.who,'timur');d.reset();assert.equal(c.tick(30,d),true);assert.match(d.active.text,/спячку/);console.log('PASS: restored original jokes, eight-second opening, frequent exchanges and resumption after routine messages');
 
 const classic=new Crew({classic:true});d.reset();classic.react({type:'complete'},1);assert.equal(classic.pending,null);d.say('dana','Рейс принят.');assert.equal(classic.tick(8,d),true);assert.match(d.queue[0].text,/кофе заварил/);d.reset();classic.tick(30,d);assert.match(d.active.text,/После смены я официально ухожу в спячку/);d.reset();classic.tick(52,d);assert.match(d.queue[0].text,/Я остался ради тебя. И потому что лифт не работает/);d.reset();classic.tick(74,d);assert.match(d.queue[0].text,/упрямый кофейник/);d.reset();classic.tick(96,d);assert.match(d.active.text,/нарисовал лицо/);console.log('PASS: original five conversations play in order, queue behind routine status, ignore new reactions then continue with fresh conversations');

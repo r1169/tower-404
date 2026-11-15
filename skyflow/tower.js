@@ -12,9 +12,15 @@
   return q<.5?bezier(near,[near[0]+(near[0]-far[0])*.25,near[1]+(near[1]-far[1])*.25],[exit[0]-.09,exit[1]],exit,q*2):bezier(exit,[exit[0]+.09,exit[1]],[gate[0]-.05,gate[1]],gate,(q-.5)*2);
  }
  function position(f,t){const {far,near}=runways[f.runway===2?2:1],gate=[f.gate==='ISO'?.9:.65+(Number(f.gate||1)-1)*.09,.55];let p,heading=0,scale=1,alt=0;
-  const q=clamp(f.progress||0);
+  const progress=clamp(f.progress||0),q=f.phase==='unauthorized'?(progress<.82?progress/.82*.4:.4+(progress-.82)/.18*.6):progress;
   if(f.phase==='holding'){p=holding(f,t);scale=.55;heading=Math.PI}
-  else if(f.phase==='landing'){
+  else if(f.phase==='goAround'){
+   const start=position(f.goAroundOrigin,f.goAroundOrigin.time),end=holding(f,f.goAroundAt+22);
+   const control=[start.x+Math.cos(start.heading)*.045,start.y+Math.sin(start.heading)*.08];
+   const path=bezier([start.x,start.y],control,[end[0]+.10,end[1]],end,q);
+   p=path.point;heading=path.heading;scale=start.scale+(.55-start.scale)*q;alt=.08;
+  }
+  else if(f.phase==='landing'||f.phase==='unauthorized'){
    if(q<.4){const origin=holding(f,f.approachTime??t-q*12),path=bezier(origin,[origin[0]-.08,origin[1]],[far[0]-(near[0]-far[0])*.65,far[1]-(near[1]-far[1])*.65],far,q/.4);p=path.point;heading=path.heading;alt=.06*(1-q/.4)}
    else{p=mix(far,near,(q-.4)/.6);heading=direction([near[0]-far[0],near[1]-far[1]])}scale=.55+q*.45;
   }else if(f.phase==='takeoff'){p=mix(near,far,q);alt=Math.max(0,(q-.65)*.16);p=[p[0],p[1]-alt];heading=direction([far[0]-near[0],far[1]-near[1]]);scale=1-q*.45}
@@ -23,7 +29,7 @@
   return {x:p[0],y:p[1],groundY:f.phase==='takeoff'?p[1]+alt:p[1],heading,scale,altitude:alt};
  }
  function orientation(heading){return {facing:Math.cos(heading)<0?-1:1,tilt:0,endView:Math.abs(Math.cos(heading))<.78}}
- function shadowVisible(f,p){return f.phase!=='holding'&&p.groundY>=.38&&(p.altitude||0)<.012}
+ function shadowVisible(f,p){return !['holding','goAround'].includes(f.phase)&&p.groundY>=.38&&(p.altitude||0)<.012}
  function jet(c,p,f,t,w,h){
   const size=Math.min(w/1000,h/562)*p.scale;
   if(shadowVisible(f,p)){c.save();c.translate(p.x*w,p.groundY*h+7);c.scale(size,size*.4);c.fillStyle='#0007';c.beginPath();c.ellipse(0,0,28,6,0,0,Math.PI*2);c.fill();c.restore()}
@@ -47,16 +53,16 @@
   if(Math.abs(co)>.5)for(let u=-17;u<16;u+=5)dot([u,front?5:-5,8],'#55a8d5',2);
   if(!front)fin();
   dot([-15,-31,4],'#ff6b70');dot([-15,31,4],'#8aefc4');
-  if(p.altitude<.015&&f.phase!=='holding')for(const v of [-4,4])dot([10,v,-2],'#111e2a',3);
+  if(p.altitude<.015&&!['holding','goAround'].includes(f.phase))for(const v of [-4,4])dot([10,v,-2],'#111e2a',3);
   if(front&&f.phase==='landing')dot([26,0,5],'#ffe3a4',3);
   c.restore();
-  const label=f.code;c.font='bold 14px Consolas,monospace';const labelWidth=c.measureText(label).width;const lx=p.x*w-labelWidth/2,ly=p.y*h-27*size-6;c.fillStyle='#06121ee8';c.fillRect(lx-5,ly-14,labelWidth+10,19);c.strokeStyle=f.urgent?'#ffce7a':'#5c9bbb';c.strokeRect(lx-5,ly-14,labelWidth+10,19);c.fillStyle=f.urgent?'#ffce7a':'#e1f3ff';c.fillText(label,lx,ly);
+  const label=f.code+(f.phase==='goAround'?' ↗':f.phase==='unauthorized'&&!f.earlyApproach?' !':'');c.font='bold 14px Consolas,monospace';const labelWidth=c.measureText(label).width;const lx=p.x*w-labelWidth/2,ly=p.y*h-27*size-6;c.fillStyle='#06121ee8';c.fillRect(lx-5,ly-14,labelWidth+10,19);c.strokeStyle=f.urgent?'#ffce7a':'#5c9bbb';c.strokeRect(lx-5,ly-14,labelWidth+10,19);c.fillStyle=f.urgent?'#ffce7a':'#e1f3ff';c.fillText(label,lx,ly);
  }
  function instrumentState(airport){
-  return {runways:airport.runways.map(r=>({...r,status:r.wreck||r.closed?'closed':r.owner!=null?'busy':r.closing?'closing':r.safeAt>airport.time?'separation':'free'})),gates:airport.gates.map(g=>{const f=airport.flights.find(f=>f.id===g.owner);return {...g,flight:f,status:g.blockedUntil>airport.time?'blocked':g.owner==null?'free':f&&['ready','service','parked','emergency'].includes(f.phase)?'occupied':'reserved'}})};
+  return {runways:airport.runways.map(r=>({...r,status:r.intruder?'intruder':r.wreck||r.closed?'closed':r.closing?'closing':r.owner!=null?'busy':r.safeAt>airport.time?'separation':'free'})),gates:airport.gates.map(g=>{const f=airport.flights.find(f=>f.id===g.owner);return {...g,flight:f,status:g.blockedUntil>airport.time?'blocked':g.owner==null?'free':f&&['ready','service','parked','emergency'].includes(f.phase)?'occupied':'reserved'}})};
  }
  function consoleInstruments(c,airport,selected){
-  const state=instrumentState(airport),colors={free:'#76e7b3',busy:'#ffc46b',closed:'#ff7278',closing:'#ffc46b',separation:'#87bbeb',occupied:'#ffc46b',reserved:'#87bbeb',blocked:'#ff7278'};
+  const state=instrumentState(airport),colors={intruder:'#ff7278',free:'#76e7b3',busy:'#ffc46b',closed:'#ff7278',closing:'#ffc46b',separation:'#87bbeb',occupied:'#ffc46b',reserved:'#87bbeb',blocked:'#ff7278'};
   function text(s,x,y,size=17,color='#bce9fa'){c.font='bold '+size+'px Consolas,monospace';c.fillStyle=color;c.fillText(s,x,y)}
   function box(x,y,w,h,color){c.strokeStyle=color;c.lineWidth=2;c.strokeRect(x,y,w,h)}
   function plane(x,y,scale,color,angle=0){c.save();c.translate(x,y);c.rotate(angle);c.scale(scale,scale);c.fillStyle=color;for(const a of [[-2,-17,4,34],[-5,-10,10,8],[-19,0,38,5],[-10,12,20,4]])c.fillRect(...a);c.fillStyle='#275978';c.fillRect(-1,-12,2,5);c.restore()}
@@ -64,7 +70,7 @@
   // Affine placement follows the two existing monitor glass surfaces.
   screen(322,491,214/320,0,-12/180,126/180,()=>{
    text('ПОЛОСЫ',12,23,20);
-   state.runways.forEach((r,i)=>{const y=36+i*66,col=colors[r.status],label={free:'СВОБОДНА',busy:'ЗАНЯТА',closed:'ЗАКРЫТА',closing:'ЗАКРЫВАЕТСЯ',separation:'ИНТЕРВАЛ'}[r.status];
+   state.runways.forEach((r,i)=>{const y=36+i*66,col=colors[r.status],label={intruder:'ЧУЖОЙ ЗАХОД',free:'СВОБОДНА',busy:'ЗАНЯТА',closed:'ЗАКРЫТА',closing:'ЗАКРЫВАЕТСЯ',separation:'ИНТЕРВАЛ'}[r.status];
     text('0'+r.id,12,y+15,20,col);text(label,58,y+15,17,col);box(12,y+23,296,29,col);
     c.fillStyle='#95b8cb';for(let x=47;x<280;x+=30)c.fillRect(x,y+36,15,2);for(let k=0;k<4;k++){c.fillRect(17,y+27+k*5,12,2);c.fillRect(291,y+27+k*5,12,2)}
     const f=airport.flights.find(f=>f.id===r.owner);if(f){const q=f.phase==='landing'?Math.max(0,(f.progress-.4)/.6):f.phase==='takeoff'?1-f.progress:1;plane(40+q*236,y+36,.55,f.id===selected?'#fff1ad':'#cfeeff',Math.PI/2)}
@@ -78,15 +84,16 @@
     if(g.status==='occupied')plane(x+31,99,.83,g.owner===selected?'#fff1ad':'#cfeeff');
     if(g.status==='reserved'){text('РЕЗ.',x+8,104,15,col);c.fillStyle=col;c.fillRect(x+27,119,8,4)}
     if(g.status==='blocked')text('×',x+22,110,28,col);
-   });const ordinary=state.gates.filter(g=>g.id!=='ISO'),occupied=ordinary.filter(g=>g.status==='occupied').length,reserved=ordinary.filter(g=>g.status==='reserved').length;
-   text('ЗАНЯТО '+occupied+' / '+ordinary.length,10,171,18,'#76e7b3');if(reserved)text('РЕЗ. '+reserved,211,171,15,'#87bbeb');
+   });const ordinary=state.gates.filter(g=>g.id!=='ISO'),reserved=ordinary.filter(g=>g.status==='reserved').length;
+   const free=ordinary.filter(g=>g.status==='free').length;
+   text('СВОБОДНО '+free+' / '+ordinary.length,10,171,18,free?'#76e7b3':'#ffc46b');if(reserved)text('РЕЗ. '+reserved,211,171,15,'#87bbeb');
   });
  }
  function draw(canvas,t,airport,selected,hero){
   const actualWidth=Math.max(1,Math.round(canvas.clientWidth||canvas.width)),actualHeight=Math.max(1,Math.round(canvas.clientHeight||canvas.height));if(canvas.width!==actualWidth)canvas.width=actualWidth;if(canvas.height!==actualHeight)canvas.height=actualHeight;
   const c=canvas.getContext('2d'),w=1280,h=720,view=fit(actualWidth,actualHeight);c.setTransform(1,0,0,1,0,0);c.fillStyle='#040b15';c.fillRect(0,0,actualWidth,actualHeight);c.setTransform(view.scale,0,0,view.scale,view.x,view.y);c.imageSmoothingEnabled=false;if(background.complete&&background.naturalWidth)c.drawImage(background,0,0,w,h);
   const traffic=hero?[{id:12,code:'SF 012',phase:'landing',progress:(t%22)/22,runway:1}]:airport.flights;
-  traffic.filter(f=>!['lost','diverted','departed','transferred','emergency'].includes(f.phase)).sort((a,b)=>position(a,t).y-position(b,t).y).forEach(f=>{const p=position(f,t);jet(c,p,f,t,w,h);if(f.id===selected){c.strokeStyle='#7ee7d0';c.strokeRect(p.x*w-25*p.scale-4,p.y*h-20*p.scale-2,54*p.scale+8,42*p.scale+4)}});
+  traffic.filter(f=>f.caseType!=='phantom'&&!['dismissed','lost','diverted','departed','transferred','emergency'].includes(f.phase)).sort((a,b)=>position(a,t).y-position(b,t).y).forEach(f=>{const p=position(f,t);jet(c,p,f,t,w,h);if(f.id===selected){c.strokeStyle='#7ee7d0';c.strokeRect(p.x*w-25*p.scale-4,p.y*h-20*p.scale-2,54*p.scale+8,42*p.scale+4)}});
   if(hero)return;
   for(const effect of airport.effects||[]){
    if(!effectStarts.has(effect))effectStarts.set(effect,performance.now());const age=(performance.now()-effectStarts.get(effect))/1000;if(age>12)continue;
@@ -103,7 +110,7 @@
     if(!r.recovery||elapsed<25){for(let i=0;i<7;i++){c.fillStyle=i%2?'#ffad39':'#e95c36';c.fillRect(x-22+i*7,y-7-Math.sin(t*5+i)*7,5,9)}for(let i=0;i<5;i++){c.fillStyle='#26303ccc';c.fillRect(x-15+i*8,y-22-i*7-Math.sin(t+i)*4,15,13)}}
     if(r.recovery){for(let i=0;i<2;i++){const tx=x+45+i*23,ty=y+20;c.fillStyle=i?'#dfd9ad':'#b64b42';c.fillRect(tx,ty,20,9);c.fillStyle='#82b7cd';c.fillRect(tx+12,ty,5,5);c.fillStyle=Math.sin(t*8)>0?'#5baaff':'#ff5b51';c.fillRect(tx+6,ty-3,6,3)}c.fillStyle='#101d2d';c.fillRect(x-50,y-60,150,28);c.fillStyle='#f4c26e';c.font='11px Consolas';c.fillText(stage+' '+Math.ceil(75-elapsed)+' с',x-44,y-43)}else{c.fillStyle='#ff9b7a';c.font='12px Consolas';c.fillText('ОБЛОМКИ / ВЫЗОВИТЕ СЛУЖБЫ',x-70,y-48)}
    }
-   const x=w*(r.id===1?.47:.5),y=h*.704;const color=r.closed||r.closing?'#ff535c':r.owner?'#ffc15b':'#62afff';c.shadowColor=color;c.shadowBlur=8;c.fillStyle=color;c.fillRect(x,y,w*.015,h*.018);c.shadowBlur=0}
+   const x=w*(r.id===1?.47:.5),y=h*.704;const color=r.closed||r.closing?'#ff535c':(r.owner!=null||r.safeAt>airport.time)?'#ffc15b':'#62afff';c.shadowColor=color;c.shadowBlur=8;c.fillStyle=color;c.fillRect(x,y,w*.015,h*.018);c.shadowBlur=0}
   consoleInstruments(c,airport,selected);
   c.font='11px Consolas,monospace';c.fillStyle='#83cfff';c.fillText('TOWER 04 / NIGHT WATCH',w*.26,h*.94);
  }
